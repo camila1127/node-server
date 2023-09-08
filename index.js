@@ -1,155 +1,97 @@
-const readline = require('readline');
-
-// Creamos la interfaz para leer la entrada del usuario
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout
-});
-
-// Objeto que almacenará las tareas
-const tareas = {};
-
-// Función para mostrar el menú
-function mostrarMenu() {
-console.log(`\n--- Bienvenido a el menu de tareas --- \n
-1. Mostrar tareas pendientes\n
-2. Mostrar tareas Completadas\n
-3. Insertar tareas \n
-4. Eliminar tareas \n
-5. Completar tareas \n
-0. Salir \n 
----------------------------------
-`);
-rl.question('Seleccione una opción: ', (opcion) => {
-    ejecutarOpcion(opcion);
-  });
-}
-
-// Función para ejecutar la opción seleccionada por el usuario
-function ejecutarOpcion(opcion) {
-  switch (opcion) {
-    case '1':
-      mostrarTareasPendientes();
-      break;
-    case '2':
-      mostrarTareasCompletas();
-      break;
-    case '3':
-      agregarTarea();
-      break;
-    case '4':
-      eliminarTarea();
-      break;
-    case '5':
-      marcarTareaCompletada();
-      break;
-    case '0':
-    
-      rl.close();
-      break;
-    default:
-      console.log('Opción inválida. ');
-      mostrarMenu();
-      break;
-  }
-}
-function mostrarTareasPendientes() {
-  console.log('\n--- Lista de Tareas incompletas---\n');
-
-  if(Object.keys(tareas).length === 0){
-    console.log("No hay tareas Pendientes");
-    mostrarMenu();
-  }else{
-    for (let index in tareas){
-      if(!tareas[index].completada)
-        console.log(`ID: ${index}\nDescripción: ${tareas[index].descripcion} \n_________________`);
-}
-console.log('\n');
-
-  mostrarMenu();
-};
-}
-
-// Función para mostrar todas las tareas
-function mostrarTareasCompletas() {
-  console.log('\n--- tareas completadas  ---\n');
-  if(Object.keys(tareas).length === 0){
-    console.log("No hay tareas Completadas");
-    mostrarMenu();
-  }else{
-    for (let index in tareas){
-      if(tareas[index].completada)
-        console.log(`ID: ${index}\nDescripción: ${tareas[index].descripcion} \n_________________`);
-}  
-  console.log('\n');
-  mostrarMenu();
-};
-}
-
-
-// Función para agregar una tarea
-function agregarTarea() {
-  rl.question('Ingrese la descripción de la tarea: ', (descripcion) => {
-    const id = Math.random().toString().substring(2);
-    tareas[id] = {
-      descripcion: descripcion,
-      completada: false
-    };
-    console.log(`Tarea agregada`);
-    mostrarMenu();
-  });
-}
-
-// Función para marcar una tarea como completada
-
-function marcarTareaCompletada() {
-  let num = 1;
-  let tareasPendientes = [];
-  if(Object.keys(tareas).length === 0){
-    console.log("No hay tareas Pendientes");
-    mostrarMenu();
-  }else{
-  for(let id in tareas){
-    if(!tareas[id].completada){
-    console.log(`${num}. ${tareas[id].descripcion}`)
-    num++;
-    tareasPendientes.push(id);
-    }
-  }
-}
-  rl.question('¿cual tarea desea completar?  ', (idtareas) => {
-    let idTareaEscogida = tareasPendientes[idtareas-1];
-    if (tareas[idTareaEscogida]) {
-      tareas[idTareaEscogida].completada = true;
-      console.log(`Tarea marcada como completada.`);
-    } else {
-      console.log('ID de tarea inválido.');
-    }
-     
-   mostrarMenu();
-  });
-}
-
-function eliminarTarea() {
-  let num = 1;
-  let allTareas= [];
-  for(let id in tareas){
-    console.log(`${num}. ${tareas[id].descripcion}`)
-    num++;
-    allTareas.push(id);
-  }
-  rl.question('¿cual tarea desea eliminar?  ', (idtareas) => {
-    let idTareaEscogida = allTareas[idtareas-1];
-    if(idtareas!=null){
-    delete tareas[idTareaEscogida];
-      console.log(`Tarea eliminada.`);
-    } else {
-      console.log('ID de tarea inválido.');
-    }
-     
-   mostrarMenu();
-  });
-}
-
-// Iniciamos el programa mostrando el menú
-mostrarMenu();
+const {
+    agregarTarea,
+    marcarTareaCompletada,
+    obtenerTareasCompletadas,
+    eliminarTarea,
+    mostrarMenu,
+    obtenerTareasPendientes,
+    tareas,
+  } = require("./gestionTareas");
+  
+  // Función para mostrar el menú
+  const main = async () => {
+    let opcion;
+    do {
+      opcion = await mostrarMenu();
+      switch (opcion) {
+        case "1":
+          console.log("**** Tareas Pendientes ****");
+          obtenerTareasPendientes()
+            .then((tarea) =>
+              tarea.map((listaTareas) => {
+                console.log(
+                  `\nID: ${listaTareas.id}\nDescripción: ${listaTareas.descripcion}\n_________________`
+                );
+              })
+            )
+            .catch((error) => {
+              console.error("Error al obtener las tareas:", error);
+            });
+          break;
+        case "2":
+          console.log("**** Tareas Completadas ****");
+          const tarea = await obtenerTareasCompletadas();
+          try {
+            tarea.map((listaTareas) => {
+              console.log(
+                `\nID: ${listaTareas.id}\nDescripción: ${listaTareas.descripcion}\n_________________`
+              );
+            });
+          } catch (error) {
+            console.error("Error al obtener las tareas:", error);
+          }
+          break;
+        case "3":
+          const newId = Math.random().toString().substring(2);
+          agregarTarea()
+            .then((descripcion) => {
+              tareas.push({
+                id: newId,
+                descripcion,
+                estado: false,
+              });
+              console.error("se agregó la tarea exitosamente");
+            })
+            .catch((error) => {
+              console.error("No se pudo agregar la tarea", error);
+            });
+          break;
+        case "4":
+          try {
+            const tarea = await eliminarTarea();
+            const indiceTarea = tareas.findIndex(
+              (item) => item.id === tarea[0].id
+            );
+            if (indiceTarea !== -1) {
+              tareas.splice(indiceTarea, 1);
+              console.log("Tarea eliminada con éxito");
+            }
+          } catch (error) {
+            console.error("Error al obtener las tareas:", error);
+          }
+          break;
+        case "5":
+          marcarTareaCompletada()
+            .then((tarea) => {
+              tarea[0].estado = true;
+              console.log("Tarea completada");
+            })
+            .catch((error) => {
+              console.error("Error al obtener las tareas:", error);
+            });
+          break;
+        case "0":
+          console.log("¡Gracias, vuelve pronto!");
+          process.exit(0);
+          break;
+        default:
+          console.log(
+            "Opción inválida. Por favor, seleccione una opción válida."
+          );
+          mostrarMenu();
+          break;
+      }
+    } while (opcion !== 0);
+  };
+  
+  main();
